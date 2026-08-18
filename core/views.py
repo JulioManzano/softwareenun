@@ -18,6 +18,9 @@ class PublicFileUploadView(generics.CreateAPIView):
 
 @csrf_exempt
 def github_webhook(request):
+    print("=== GITHUB WEBHOOK ===")
+    print(f"Method: {request.method}")
+    
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
