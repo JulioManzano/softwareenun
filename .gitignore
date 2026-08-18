@@ -24,3 +24,6 @@ media/
 # IDE
 .vscode/
 .idea/
+
+logs/
+staticfiles/
