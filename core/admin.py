@@ -7,7 +7,7 @@ from django.utils.html import format_html
 @admin.register(PublicFile)
 class PublicFileAdmin(admin.ModelAdmin):
     list_display = (
-        "thumbnail",
+        #"thumbnail",
         "id",
         "name",
         "file",
