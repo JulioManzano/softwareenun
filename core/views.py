@@ -17,7 +17,7 @@ class PublicFileUploadView(generics.CreateAPIView):
 
 
 @csrf_exempt
-def github_webhook(request):
+def github_webhook2(request):
     print("=== GITHUB WEBHOOK 1 ===")
     print(f"Method: {request.method}")
 
@@ -37,7 +37,7 @@ def github_webhook(request):
     })
     
 @csrf_exempt
-def github_webhook2(request):
+def github_webhook(request):
     print("=== GITHUB WEBHOOK 2 ===")
     print(f"Method: {request.method}")
     
