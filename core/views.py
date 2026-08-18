@@ -21,8 +21,8 @@ def github_webhook(request):
     print("=== GITHUB WEBHOOK ===")
     print(f"Method: {request.method}")
     
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
+    ##if request.method != "POST":
+    ##    return JsonResponse({"error": "Method not allowed"}, status=405)
 
     secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode()
     signature = request.headers.get("X-Hub-Signature-256", "")
