@@ -1,9 +1,15 @@
 from django.db import models
 from django.utils.text import slugify
+import uuid
 
+def upload_public_file(instance, filename):
+    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    filename = f"{uuid.uuid4()}.{extension}" if extension else str(uuid.uuid4())
+
+    return f"uploads/{filename}"
 
 class PublicFile(models.Model):
-    file = models.FileField(upload_to="uploads/%Y/%m/")
+    file = models.FileField(upload_to=upload_public_file)
     name = models.CharField(max_length=255, blank=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
 
