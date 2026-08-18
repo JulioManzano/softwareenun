@@ -18,11 +18,31 @@ class PublicFileUploadView(generics.CreateAPIView):
 
 @csrf_exempt
 def github_webhook(request):
-    print("=== GITHUB WEBHOOK ===")
+    print("=== GITHUB WEBHOOK 1 ===")
+    print(f"Method: {request.method}")
+
+    print("🚀 Iniciando deploy...")
+
+    subprocess.Popen(
+        [
+            "/opt/softwareenun/deploy.sh",
+        ],
+        cwd="/opt/softwareenun",
+    )
+
+    print("✅ Deploy enviado al proceso")
+
+    return JsonResponse({
+        "message": "Deploy started"
+    })
+    
+@csrf_exempt
+def github_webhook2(request):
+    print("=== GITHUB WEBHOOK 2 ===")
     print(f"Method: {request.method}")
     
-    ##if request.method != "POST":
-    ##    return JsonResponse({"error": "Method not allowed"}, status=405)
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
     secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode()
     signature = request.headers.get("X-Hub-Signature-256", "")
