@@ -1,6 +1,7 @@
 
 from django.contrib import admin
 from .models import PublicFile
+import config.logger_setup 
 
 
 @admin.register(PublicFile)
