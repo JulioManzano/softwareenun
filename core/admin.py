@@ -34,8 +34,17 @@ class PublicFileAdminForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["file"].required = False
+
         upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
+
+        # Archivos que ya están asignados a un PublicFile
+        used_files = set(
+            PublicFile.objects
+            .exclude(file="")
+            .values_list("file", flat=True)
+        )
 
         choices = [("", "---------")]
 
@@ -48,6 +57,10 @@ class PublicFileAdminForm(forms.ModelForm):
                         full_path,
                         settings.MEDIA_ROOT,
                     ).replace(os.sep, "/")
+
+                    # No mostrar archivos que ya están asignados
+                    if relative_path in used_files:
+                        continue
 
                     choices.append(
                         (

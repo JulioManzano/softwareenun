@@ -2,7 +2,8 @@ from django.db import models
 from django.utils.text import slugify
 import uuid
 from django.contrib.auth.models import AbstractUser
-
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 def upload_public_file(instance, filename):
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
@@ -96,3 +97,10 @@ class PublicFile(models.Model):
 
     def __str__(self):
         return self.name or self.file.name
+    
+    
+
+@receiver(post_delete, sender=PublicFile)
+def delete_public_file(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(save=False)
