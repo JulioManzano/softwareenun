@@ -3,6 +3,7 @@ from django.utils.text import slugify
 import uuid
 from django.contrib.auth.models import AbstractUser
 
+
 def upload_public_file(instance, filename):
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     filename = f"{uuid.uuid4()}.{extension}" if extension else str(uuid.uuid4())

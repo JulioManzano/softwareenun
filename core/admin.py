@@ -3,9 +3,52 @@ from django.contrib import admin
 from .models import PublicFile, PublicFileProject
 import config.logger_setup 
 from django.utils.html import format_html
+import os
+from django.conf import settings
+from django import forms
 
+class PublicFileAdminForm(forms.ModelForm):
+
+    existing_file = forms.ChoiceField(
+        label="Archivo existente",
+        required=False,
+        choices=[],
+    )
+
+    class Meta:
+        model = PublicFile
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
+
+        choices = [("", "---------")]
+
+        if os.path.exists(upload_dir):
+            for root, dirs, files in os.walk(upload_dir):
+                for filename in files:
+                    full_path = os.path.join(root, filename)
+
+                    relative_path = os.path.relpath(
+                        full_path,
+                        settings.MEDIA_ROOT,
+                    ).replace(os.sep, "/")
+
+                    choices.append(
+                        (
+                            relative_path,
+                            relative_path,
+                        )
+                    )
+
+        self.fields["existing_file"].choices = choices
+        
 @admin.register(PublicFile)
 class PublicFileAdmin(admin.ModelAdmin):
+    form = PublicFileAdminForm
+
     class Media:
         js = ("admin/public_file_upload.js",)
         
