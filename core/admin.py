@@ -6,6 +6,9 @@ from django.utils.html import format_html
 
 @admin.register(PublicFile)
 class PublicFileAdmin(admin.ModelAdmin):
+    class Media:
+        js = ("admin/public_file_upload.js",)
+        
     list_display = (
         "thumbnail",
         "id",
