@@ -34,7 +34,7 @@ class PublicFileAdminForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        self.fields["file"].required = False
         upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
 
         choices = [("", "---------")]
