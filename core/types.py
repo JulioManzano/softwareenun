@@ -17,12 +17,17 @@ class PublicFileType(DjangoObjectType):
         fields = "__all__"
 
     def resolve_file(self, info):
+        print("🔥 RESOLVE FILE EJECUTADO")
+        print("FILE:", self.file)
+        print("NAME:", self.file.name)
+        print("URL:", self.file.url)
+
         if not self.file:
             return None
 
-
-        return info.context.build_absolute_uri(self.file.url)
-
+        return info.context.build_absolute_uri(
+            self.file.url
+        )
 
 
 class PublicFileListType(DjangoListObjectType):
@@ -30,7 +35,6 @@ class PublicFileListType(DjangoListObjectType):
     class Meta:
         model = PublicFile
         pagination = LimitOffsetGraphqlPagination(default_limit=25)
-
 
 class PublicFileProjectType(DjangoObjectType):
 
