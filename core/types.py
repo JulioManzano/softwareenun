@@ -20,11 +20,9 @@ class PublicFileType(DjangoObjectType):
         if not self.file:
             return None
 
-        request = info.context
 
-        return request.build_absolute_uri(
-            self.file.url
-        )
+        return info.context.build_absolute_uri(self.file.url)
+
 
 
 class PublicFileListType(DjangoListObjectType):
