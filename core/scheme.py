@@ -54,10 +54,20 @@ class PublicFileFilter(django_filters.FilterSet):
 
 
 class Query(graphene.ObjectType):
+
+    public_file_projects = graphene.List(
+        PublicFileProjectType
+    )
+
     public_files = DjangoFilterConnectionField(
         PublicFileType,
         filterset_class=PublicFileFilter,
     )
 
+    def resolve_public_file_projects(self, info):
+        return PublicFileProject.objects.all()
+
     def resolve_public_files(self, info, **kwargs):
-        return PublicFile.objects.filter(is_public=True)
+        return PublicFile.objects.filter(
+            is_public=True
+        )
