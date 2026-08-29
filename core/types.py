@@ -1,3 +1,4 @@
+
 import graphene
 
 from graphene_django import DjangoObjectType
@@ -7,13 +8,8 @@ from graphene_django_extras.paginations import LimitOffsetGraphqlPagination
 from .models import PublicFile, PublicFileProject
 
 
-class PublicFileListType(DjangoListObjectType):
-    class Meta:
-        model = PublicFile
-        pagination = LimitOffsetGraphqlPagination(default_limit=25)
-
-
 class PublicFileType(DjangoObjectType):
+
     file = graphene.String()
 
     class Meta:
@@ -31,13 +27,29 @@ class PublicFileType(DjangoObjectType):
         )
 
 
-class PublicFileProjectListType(DjangoListObjectType):
+class PublicFileListType(DjangoListObjectType):
+
     class Meta:
-        model = PublicFileProject
+        model = PublicFile
         pagination = LimitOffsetGraphqlPagination(default_limit=25)
 
 
 class PublicFileProjectType(DjangoObjectType):
+
+    files = graphene.List(PublicFileType)
+
     class Meta:
         model = PublicFileProject
         fields = "__all__"
+
+    def resolve_files(self, info):
+        return self.files.filter(
+            is_public=True
+        )
+
+
+class PublicFileProjectListType(DjangoListObjectType):
+
+    class Meta:
+        model = PublicFileProject
+        pagination = LimitOffsetGraphqlPagination(default_limit=25)
