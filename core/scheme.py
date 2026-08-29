@@ -7,6 +7,7 @@ from core.models import PublicFile
 from .types import (
     PublicFileListType,
     PublicFileProjectListType,
+    PublicFileType,
 )
 
 from .filters import (
@@ -15,20 +16,22 @@ from .filters import (
 )
 
 
+
 class Query(graphene.ObjectType):
 
-    public_files = DjangoListObjectField(
-        PublicFileListType,
-        filterset_class=PublicFileFilter,
+    public_files = graphene.List(
+        PublicFileType,
+        project_id=graphene.Decimal(),
     )
 
-    def resolve_public_files(self, info, **kwargs):
-        print("🔥🔥🔥 ENTRÓ A resolve_public_files")
-        print("ARGS:", kwargs)
+    def resolve_public_files(self, info, project_id=None):
 
         queryset = PublicFile.objects.all()
 
-        print("TOTAL:", queryset.count())
+        if project_id:
+            queryset = queryset.filter(
+                project_id=project_id
+            )
 
         return queryset
 
