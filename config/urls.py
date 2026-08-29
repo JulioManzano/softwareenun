@@ -15,14 +15,39 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.views.decorators.csrf import csrf_exempt
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
+import graphene
+from channel.scheme import  Query as ChannelQuery
+from graphene_django_extras import all_directives
+from graphene_file_upload.django import FileUploadGraphQLView
 
+class Query(ChannelQuery, graphene.ObjectType):
+    pass
+
+class Mutation(graphene.ObjectType):
+    pass
+
+schema = graphene.Schema(query=Query, mutation=Mutation, auto_camelcase=False, directives=all_directives)
+
+
+class DebugView(FileUploadGraphQLView):
+    def dispatch(self, request, *args, **kwargs):       
+        return super().dispatch(request, *args, **kwargs)
+    
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("core.urls")),
+    path(
+        "graphql/",
+        csrf_exempt(DebugView.as_view(graphiql=True, schema=schema)),
+    ),
 ]
 
 if settings.DEBUG:
