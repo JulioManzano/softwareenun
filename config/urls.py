@@ -30,11 +30,15 @@ from graphene_file_upload.django import FileUploadGraphQLView
 class Query(ChannelQuery, graphene.ObjectType):
     pass
 
-class Mutation(graphene.ObjectType):
-    pass
+#class Mutation(graphene.ObjectType):
+#    pass
 
-schema = graphene.Schema(query=Query, mutation=Mutation, auto_camelcase=False, directives=all_directives)
-
+#schema = graphene.Schema(query=Query, mutation=Mutation, auto_camelcase=False, directives=all_directives)
+schema = graphene.Schema(
+    query=Query,
+    auto_camelcase=False,
+    directives=all_directives,
+)
 
 class DebugView(FileUploadGraphQLView):
     def dispatch(self, request, *args, **kwargs):       
