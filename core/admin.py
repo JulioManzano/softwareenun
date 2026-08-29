@@ -12,7 +12,6 @@ class PublicFileAdmin(admin.ModelAdmin):
     list_display = (
         "thumbnail",
         "id",
-        "name",
         "file",
         "is_public",
         "created_at",
