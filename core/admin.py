@@ -78,6 +78,7 @@ class PublicFileAdmin(admin.ModelAdmin):
 
     fields = (
         "file",
+        "existing_file",
         "preview",
         "name",
         "is_public",
