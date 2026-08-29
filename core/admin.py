@@ -103,6 +103,7 @@ class PublicFileAdmin(admin.ModelAdmin):
     )
 
     fields = (
+        "project",
         "file",
         "existing_file",
         "preview",
