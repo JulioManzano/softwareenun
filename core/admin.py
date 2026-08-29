@@ -18,7 +18,20 @@ class PublicFileAdminForm(forms.ModelForm):
     class Meta:
         model = PublicFile
         fields = "__all__"
+        
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
+        existing_file = self.cleaned_data.get("existing_file")
+
+        if existing_file:
+            instance.file.name = existing_file
+
+        if commit:
+            instance.save()
+
+        return instance
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
