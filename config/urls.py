@@ -24,10 +24,11 @@ from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 import graphene
 from channel.scheme import  Query as ChannelQuery
+from core.scheme import Query as CoreQuery
 from graphene_django_extras import all_directives
 from graphene_file_upload.django import FileUploadGraphQLView
 
-class Query(ChannelQuery, graphene.ObjectType):
+class Query(ChannelQuery, CoreQuery,graphene.ObjectType):
     pass
 
 #class Mutation(graphene.ObjectType):
