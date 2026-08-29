@@ -1,12 +1,64 @@
 from django.db import models
 from django.utils.text import slugify
 import uuid
+from django.contrib.auth.models import AbstractUser
 
 def upload_public_file(instance, filename):
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     filename = f"{uuid.uuid4()}.{extension}" if extension else str(uuid.uuid4())
 
     return f"uploads/{filename}"
+
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class User(AbstractUser):
+
+    email = models.EmailField(unique=True)
+    roles = models.ManyToManyField(Role)
+    email_verified = models.BooleanField(default=False)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)    
+    is_banned = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.id} | {self.email}"
+    
+class UserAuth(models.Model):
+    PROVIDERS = (
+        ("password", "Password"),
+        ("google", "Google"),
+        ("apple", "Apple"),
+        ("facebook", "Facebook"),
+    )
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="auth_methods",)
+    provider = models.CharField(max_length=20,choices=PROVIDERS,)
+
+    provider_uid = models.CharField(max_length=255,blank=True,null=True,)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "provider_uid"],
+                name="unique_provider_uid",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "provider"],
+                name="unique_user_provider",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user"]),
+        ]
+        
 
 class PublicFileProject(models.Model):
     name = models.CharField(max_length=100)
