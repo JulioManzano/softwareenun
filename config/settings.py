@@ -34,7 +34,7 @@ ALLOWED_HOSTS = os.environ.get(
     ""
 ).split(",")
 
-# Application definition
+# Application definition 
 
 INSTALLED_APPS = [
     'django.contrib.admin',
