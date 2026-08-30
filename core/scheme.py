@@ -40,7 +40,6 @@ class Query(graphene.ObjectType):
         filterset_class=PublicFileProjectFilter,
     )
     
-
 class EnhanceImageMutation(graphene.Mutation):
 
     class Arguments:
@@ -63,24 +62,37 @@ class EnhanceImageMutation(graphene.Mutation):
     ):
         try:
 
+            print("=== ENHANCE IMAGE MUTATION ===")
+            print("Image:", getattr(image, "name", None))
+            print("Size:", getattr(image, "size", None))
+            print("Scale:", scale)
+            print("Face enhance:", face_enhance)
+
             if scale not in [2, 4]:
                 return cls(
                     success=False,
                     error="La escala debe ser 2 o 4.",
                 )
 
-            output = ReplicateService.enhance_image(
+            url = ReplicateService.enhance_image(
                 image_file=image,
                 scale=scale,
                 face_enhance=face_enhance,
             )
 
+            print("Enhanced URL:", url)
+
             return cls(
                 success=True,
-                url=output.url,
+                url=url,
             )
 
         except Exception as e:
+
+            print(
+                "ERROR ENHANCE IMAGE MUTATION:",
+                e,
+            )
 
             return cls(
                 success=False,
