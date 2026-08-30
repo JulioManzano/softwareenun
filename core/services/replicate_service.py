@@ -20,7 +20,7 @@ class ReplicateService:
         )
 
         logger.info(
-            "Filename: %s",
+            "Image: %s",
             getattr(image_file, "name", None),
         )
 
@@ -42,40 +42,36 @@ class ReplicateService:
         token = settings.REPLICATE_API_TOKEN
 
         if not token:
-            logger.error(
-                "REPLICATE_API_TOKEN no está configurado"
-            )
-
             raise Exception(
                 "REPLICATE_API_TOKEN no configurado"
             )
-
-        logger.info(
-            "Replicate token configurado: %s...",
-            token[:8],
-        )
 
         client = replicate.Client(
             api_token=token,
         )
 
         try:
-
             logger.info(
-                "Enviando imagen a Replicate..."
+                "Preparando archivo para Replicate..."
             )
 
+            # Volvemos al comienzo del archivo.
+            image_file.seek(0)
+
+            # Replicate necesita un archivo/stream,
+            # no el InMemoryUploadedFile de Django
+            # como objeto JSON.
             output = client.run(
                 "nightmareai/real-esrgan",
                 input={
-                    "image": image_file,
+                    "image": image_file.file,
                     "scale": scale,
                     "face_enhance": face_enhance,
                 },
             )
 
             logger.info(
-                "Replicate respondió."
+                "Replicate respondió correctamente."
             )
 
             logger.info(
@@ -94,31 +90,26 @@ class ReplicateService:
                 )
 
             if hasattr(output, "url"):
-
                 url = output.url
 
             elif isinstance(output, str):
-
                 url = output
 
             else:
-
                 raise Exception(
                     "Formato de output desconocido: "
                     f"{type(output)}"
                 )
 
             logger.info(
-                "Output URL: %s",
+                "Enhanced URL: %s",
                 url,
             )
 
             return url
 
         except Exception:
-
             logger.exception(
                 "ERROR procesando imagen con Replicate"
             )
-
             raise
