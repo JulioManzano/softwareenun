@@ -25,18 +25,21 @@ from django.views.decorators.csrf import csrf_exempt
 import graphene
 from channel.scheme import  Query as ChannelQuery
 from core.scheme import Query as CoreQuery
+from core.scheme import Mutation as CoreMutation
 from graphene_django_extras import all_directives
 from graphene_file_upload.django import FileUploadGraphQLView
 
 class Query(ChannelQuery, CoreQuery,graphene.ObjectType):
     pass
 
-#class Mutation(graphene.ObjectType):
-#    pass
+class Mutation(CoreMutation, graphene.ObjectType):
+    pass
 
 #schema = graphene.Schema(query=Query, mutation=Mutation, auto_camelcase=False, directives=all_directives)
 schema = graphene.Schema(
     query=Query,
+    mutation=Mutation,
+
     auto_camelcase=False,
     directives=all_directives,
 )
