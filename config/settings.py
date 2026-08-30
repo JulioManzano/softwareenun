@@ -25,6 +25,7 @@ load_dotenv(BASE_DIR / ".env")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 AUTH_USER_MODEL = 'core.User'
