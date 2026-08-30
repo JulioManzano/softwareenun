@@ -45,13 +45,14 @@ class ReplicateService:
 
         # No tocar imágenes que ya entran.
         if original_pixels <= ReplicateService.MAX_PIXELS:
-
             logger.info(
                 "Image is within GPU limit. "
                 "No resize required."
             )
 
-            return image_file
+            image_file.seek(0)
+
+            return image_file.file
 
         # Factor necesario para reducir la cantidad
         # de píxeles manteniendo la proporción.
@@ -295,14 +296,5 @@ class ReplicateService:
             raise
 
         finally:
-
-            # Liberamos el BytesIO si tuvimos que
-            # redimensionar la imagen.
-            if (
-                prepared_image is not None
-                and isinstance(
-                    prepared_image,
-                    io.BytesIO,
-                )
-            ):
+            if isinstance(prepared_image, io.BytesIO):
                 prepared_image.close()
