@@ -1,6 +1,6 @@
 import graphene
 from graphene_django_extras import DjangoListObjectField
-from core.downloader import GetDownloadInfo
+from .downloader.mutation import GetDownloadInfo
 from core.models import PublicFile, PublicFileProject
 from graphene_file_upload.scalars import Upload
 from core.services.replicate_service import ReplicateService
