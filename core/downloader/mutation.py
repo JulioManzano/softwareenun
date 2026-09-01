@@ -18,7 +18,13 @@ class GetDownloadInfo(graphene.Mutation):
 
             result = service.get_info(url)
 
+            print("\n=== DOWNLOAD SERVICE RESULT ===")
+            print(result)
+
             data = result["data"]
+
+            print("=== NORMALIZED DATA ===")
+            print(data)
 
             return DownloadInfoType(
                 success=True,
