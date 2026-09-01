@@ -84,7 +84,7 @@ class PublicFile(models.Model):
     name = models.CharField(max_length=255, blank=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True) 
 
     is_public = models.BooleanField(default=True)
 
