@@ -1,6 +1,6 @@
 import graphene
 from graphene_django_extras import DjangoListObjectField
-from .downloader.mutation import GetDownloadInfo
+from .downloader.mutation import GetDownloadInfo,GetDownloadUrl
 from core.models import PublicFile, PublicFileProject
 from graphene_file_upload.scalars import Upload
 from core.services.replicate_service import ReplicateService
@@ -173,3 +173,4 @@ class Mutation(graphene.ObjectType):
     enhance_image = EnhanceImageMutation.Field()
 
     get_download_info = GetDownloadInfo.Field()
+    get_download_url = GetDownloadUrl.Field()
