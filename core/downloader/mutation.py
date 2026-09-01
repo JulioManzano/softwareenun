@@ -16,15 +16,10 @@ class GetDownloadInfo(graphene.Mutation):
         try:
             service = get_downloader_service()
 
-            result = service.get_info(url)
+            data = service.get_info(url)
 
-            print("\n=== DOWNLOAD SERVICE RESULT ===")
-            print(result)
-
-            data = result["data"]
-
-            print("=== NORMALIZED DATA ===")
-            print(data)
+            print("\n=== DOWNLOAD INFO MUTATION ===")
+            print("DATA:", data)
 
             return DownloadInfoType(
                 success=True,
@@ -39,6 +34,9 @@ class GetDownloadInfo(graphene.Mutation):
             )
 
         except Exception as e:
+            print("\n=== DOWNLOAD INFO ERROR ===")
+            print("ERROR:", repr(e))
+
             return DownloadInfoType(
                 success=False,
                 message=str(e),
