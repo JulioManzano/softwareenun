@@ -109,6 +109,10 @@ class YoinkuProvider(DownloaderProvider):
         url,
         format_id,
     ):
+        print("\n=== YOINKU DOWNLOAD ===")
+        print("URL:", url)
+        print("FORMAT:", format_id)
+
         response = requests.get(
             f"{self.BASE_URL}/download",
             params={
@@ -116,8 +120,11 @@ class YoinkuProvider(DownloaderProvider):
                 "format": format_id,
             },
             headers=self.headers,
-            timeout=60,
+            timeout=120,
         )
+
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
 
         response.raise_for_status()
 
@@ -132,4 +139,11 @@ class YoinkuProvider(DownloaderProvider):
                 else "Yoinku error"
             )
 
-        return data
+        return {
+            "url": data.get("url"),
+            "filename": data.get("filename"),
+            "format_id": format_id,
+            "expires_in_seconds": data.get(
+                "expiresInSeconds"
+            ),
+        }

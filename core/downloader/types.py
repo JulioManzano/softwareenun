@@ -24,3 +24,11 @@ class DownloadInfoType(graphene.ObjectType):
     thumbnail = graphene.String()
     duration_seconds = graphene.Int()
     formats = graphene.List(DownloadFormatType)
+    
+class DownloadResultType(graphene.ObjectType):
+    success = graphene.Boolean()
+    message = graphene.String()
+    url = graphene.String()
+    filename = graphene.String()
+    format_id = graphene.String()
+    expires_in_seconds = graphene.Int()
