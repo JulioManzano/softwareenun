@@ -17,6 +17,9 @@ class YoinkuProvider(DownloaderProvider):
         }
 
     def get_info(self, url):
+        print("\n=== YOINKU GET INFO ===")
+        print("URL:", url)
+
         response = requests.get(
             f"{self.BASE_URL}/info",
             params={"url": url},
@@ -24,19 +27,38 @@ class YoinkuProvider(DownloaderProvider):
             timeout=30,
         )
 
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
+
         response.raise_for_status()
 
         data = response.json()
 
+        print("JSON:", data)
+        print("JSON TYPE:", type(data))
+
         if not data.get("ok"):
+            error = data.get("error")
+
+            print("YOINKU ERROR:", error)
+
             raise Exception(
-                data.get("error", {}).get(
-                    "message",
-                    "Yoinku error",
-                )
+                error.get("message", "Yoinku error")
+                if isinstance(error, dict)
+                else "Yoinku error"
             )
 
-        return self._normalize_info(data["data"])
+        if "data" not in data:
+            print("YOINKU RESPONSE WITHOUT DATA")
+            raise Exception(
+                "Yoinku no devolvió el campo data"
+            )
+
+        print("YOINKU DATA:", data["data"])
+
+        return self._normalize_info(
+            data["data"]
+        )
 
     def _normalize_info(self, data):
         formats = []
@@ -53,8 +75,14 @@ class YoinkuProvider(DownloaderProvider):
                 "audio_bitrate_kbps": fmt.get(
                     "audioBitrateKbps"
                 ),
-                "has_video": fmt.get("hasVideo", False),
-                "has_audio": fmt.get("hasAudio", False),
+                "has_video": fmt.get(
+                    "hasVideo",
+                    False,
+                ),
+                "has_audio": fmt.get(
+                    "hasAudio",
+                    False,
+                ),
                 "filesize_bytes": fmt.get(
                     "filesizeBytes"
                 ),
@@ -67,14 +95,20 @@ class YoinkuProvider(DownloaderProvider):
         return {
             "title": data.get("title"),
             "author": data.get("author"),
-            "thumbnail": data.get("thumbnailUrl"),
+            "thumbnail": data.get(
+                "thumbnailUrl"
+            ),
             "duration_seconds": data.get(
                 "durationSeconds"
             ),
             "formats": formats,
         }
 
-    def get_download_url(self, url, format_id):
+    def get_download_url(
+        self,
+        url,
+        format_id,
+    ):
         response = requests.get(
             f"{self.BASE_URL}/download",
             params={
@@ -90,11 +124,12 @@ class YoinkuProvider(DownloaderProvider):
         data = response.json()
 
         if not data.get("ok"):
+            error = data.get("error")
+
             raise Exception(
-                data.get("error", {}).get(
-                    "message",
-                    "Yoinku error",
-                )
+                error.get("message", "Yoinku error")
+                if isinstance(error, dict)
+                else "Yoinku error"
             )
 
         return data
