@@ -1,5 +1,6 @@
 import graphene
 from graphene_django_extras import DjangoListObjectField
+from core.downloader import GetDownloadInfo
 from core.models import PublicFile, PublicFileProject
 from graphene_file_upload.scalars import Upload
 from core.services.replicate_service import ReplicateService
@@ -170,3 +171,5 @@ class UploadPublicFileMutation(graphene.Mutation):
 class Mutation(graphene.ObjectType):
     upload_public_file = UploadPublicFileMutation.Field()
     enhance_image = EnhanceImageMutation.Field()
+
+    get_download_info = GetDownloadInfo.Field()
