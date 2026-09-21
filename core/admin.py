@@ -1,11 +1,17 @@
 
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest
+from django.shortcuts import render
+from django.urls import path
 from .models import PublicFile, PublicFileProject
 import config.logger_setup 
 from django.utils.html import format_html
 import os
 from django.conf import settings
 from django import forms
+
+from .services.public_file_sync import sync_public_files
 
 class PublicFileAdminForm(forms.ModelForm):
 
@@ -167,6 +173,8 @@ class PublicFileInline(admin.TabularInline):
 
 @admin.register(PublicFileProject)
 class PublicFileProjectAdmin(admin.ModelAdmin):
+    change_list_template = "admin/core/publicfileproject/change_list.html"
+
     list_display = (
         "name",
         "slug",
@@ -192,6 +200,41 @@ class PublicFileProjectAdmin(admin.ModelAdmin):
     inlines = (
         PublicFileInline,
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "sync-public-files/",
+                self.admin_site.admin_view(self.sync_public_files_view),
+                name="core_publicfileproject_sync",
+            ),
+        ]
+        return custom_urls + urls
+
+    def _can_sync(self, request: HttpRequest) -> bool:
+        return request.user.has_perms(
+            [
+                "core.change_publicfileproject",
+                "core.add_publicfile",
+            ]
+        )
+
+    def sync_public_files_view(self, request: HttpRequest):
+        if not self._can_sync(request):
+            raise PermissionDenied
+
+        result = None
+        if request.method == "POST":
+            result = sync_public_files(
+                dry_run=request.POST.get("mode") == "dry-run"
+            )
+
+        return render(
+            request,
+            "admin/core/publicfileproject/sync_public_files.html",
+            {"result": result},
+        )
 
     @admin.display(description="Archivos")
     def file_count(self, obj):

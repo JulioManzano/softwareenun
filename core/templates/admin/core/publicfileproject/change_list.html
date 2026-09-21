@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {% if perms.core.change_publicfileproject and perms.core.add_publicfile %}
+    <li>
+      <a href="sync-public-files/" class="addlink">Sincronizar archivos</a>
+    </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

@@ -1,15 +1,35 @@
-from django.db import models
-from django.utils.text import slugify
+from pathlib import PurePosixPath
 import uuid
+
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db.models.signals import post_delete
+from django.db import models
 from django.dispatch import receiver
+from django.utils.text import get_valid_filename, slugify
+
 
 def upload_public_file(instance, filename):
-    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    filename = f"{uuid.uuid4()}.{extension}" if extension else str(uuid.uuid4())
+    """Store new uploads below the owning project's public directory.
 
-    return f"uploads/{filename}"
+    Existing ``PublicFile`` rows keep their current relative storage name. This
+    function is only applied when Django receives a new uploaded file.
+    """
+    if not instance.project_id or not instance.project or not instance.project.slug:
+        raise ValidationError(
+            "Un PublicFile nuevo requiere un proyecto con slug antes de guardar el archivo."
+        )
+
+    project_slug = slugify(instance.project.slug)
+    if project_slug != instance.project.slug:
+        raise ValidationError("El slug del proyecto no es seguro para almacenamiento.")
+
+    normalized_name = str(filename).replace("\\", "/")
+    safe_name = get_valid_filename(PurePosixPath(normalized_name).name)
+    if not safe_name or safe_name in {".", ".."}:
+        raise ValidationError("El nombre del archivo no es válido.")
+
+    return (PurePosixPath("public_files") / project_slug / safe_name).as_posix()
 
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -91,7 +111,17 @@ class PublicFile(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             base_name = self.name or self.file.name
-            self.slug = slugify(base_name)
+            base_slug = slugify(base_name) or uuid.uuid4().hex
+            self.slug = base_slug[:255]
+            suffix = 2
+            while (
+                PublicFile.objects.filter(slug=self.slug)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                suffix_text = f"-{suffix}"
+                self.slug = f"{base_slug[:255 - len(suffix_text)]}{suffix_text}"
+                suffix += 1
 
         super().save(*args, **kwargs)
 
