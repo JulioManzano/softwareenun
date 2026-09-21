@@ -14,6 +14,9 @@ PUBLIC_FILES_DIRECTORY = "public_files"
 @dataclass
 class PublicFileSyncResult:
     dry_run: bool = False
+    media_root: str = ""
+    public_files_root: str = ""
+    known_projects: list[str] = field(default_factory=list)
     created_directories: list[str] = field(default_factory=list)
     created_folders: list[str] = field(default_factory=list)
     existing_folders: list[str] = field(default_factory=list)
@@ -284,6 +287,12 @@ def sync_public_files(*, dry_run: bool = False) -> PublicFileSyncResult:
     media_root = _media_root()
     public_root = _public_files_root()
     projects = _project_by_slug()
+    result.media_root = str(media_root)
+    result.public_files_root = str(public_root)
+    result.known_projects = [
+        f"{project.pk}: {project.name} (slug={project.slug})"
+        for project in PublicFileProject.objects.all().order_by("slug")
+    ]
 
     for project in PublicFileProject.objects.all():
         if not project.slug:

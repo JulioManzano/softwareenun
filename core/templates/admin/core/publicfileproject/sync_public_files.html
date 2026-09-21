@@ -11,6 +11,18 @@
     </form>
   {% else %}
     <h2>Resumen{% if result.dry_run %} de simulación{% endif %}</h2>
+    <p><strong>MEDIA_ROOT:</strong> <code>{{ result.media_root }}</code></p>
+    <p><strong>Ruta escaneada:</strong> <code>{{ result.public_files_root }}</code></p>
+    <h3>Proyectos encontrados en la base de datos</h3>
+    {% if result.known_projects %}
+      <ul>
+        {% for project in result.known_projects %}
+          <li><code>{{ project }}</code></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No hay proyectos registrados en la base de datos.</p>
+    {% endif %}
     <ul>
       <li>Carpetas creadas o a crear: {{ result.created_directories|length }}</li>
       <li>Subcarpetas creadas o a crear: {{ result.created_folders|length }}</li>
@@ -23,6 +35,23 @@
       <li>Conflictos de carpetas: {{ result.folder_conflicts|length }}</li>
       <li>Errores: {{ result.errors|length }}</li>
     </ul>
+    {% if result.unknown_projects %}
+      <h3>Carpetas de proyecto desconocidas</h3>
+      <ul>
+        {% for project in result.unknown_projects %}
+          <li><code>{{ project }}</code></li>
+        {% endfor %}
+      </ul>
+      <p>El nombre de la carpeta debe coincidir exactamente con el <code>slug</code> de un proyecto.</p>
+    {% endif %}
+    {% if result.unassigned_files %}
+      <h3>Archivos no asignados</h3>
+      <ul>
+        {% for file in result.unassigned_files %}
+          <li><code>{{ file }}</code></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <p><a href="../">Volver a proyectos</a></p>
   {% endif %}
 {% endblock %}

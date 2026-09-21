@@ -18,6 +18,9 @@ class Command(BaseCommand):
         prefix = "[dry-run] " if result.dry_run else ""
 
         self.stdout.write(self.style.SUCCESS(f"{prefix}Sincronización finalizada."))
+        self.stdout.write(f"MEDIA_ROOT: {result.media_root}")
+        self.stdout.write(f"Ruta escaneada: {result.public_files_root}")
+        self.stdout.write(f"Proyectos en la base de datos: {len(result.known_projects)}")
         self.stdout.write(f"Carpetas creadas o a crear: {len(result.created_directories)}")
         self.stdout.write(f"Subcarpetas creadas o a crear: {len(result.created_folders)}")
         self.stdout.write(f"Carpetas ya existentes: {len(result.existing_folders)}")
@@ -30,6 +33,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Errores: {len(result.errors)}")
 
         for label, values in (
+            ("Proyecto en BD", result.known_projects),
             ("Carpeta", result.created_directories),
             ("Subcarpeta", result.created_folders),
             ("Importar", result.imported_files),
