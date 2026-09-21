@@ -21,6 +21,18 @@ from .filters import (
 
 class Query(graphene.ObjectType):
 
+    public_file_folders = graphene.List(
+        PublicFileFolderType,
+        project_id=graphene.ID(required=True),
+        parent_id=graphene.ID(),
+    )
+
+    def resolve_public_file_folders(self, info, project_id, parent_id=None):
+        queryset = PublicFileFolder.objects.filter(project_id=project_id)
+        if parent_id:
+            return queryset.filter(parent_id=parent_id)
+        return queryset.filter(parent__isnull=True)
+
     public_files = graphene.List(
         PublicFileType,
         project_id=graphene.Decimal(),
