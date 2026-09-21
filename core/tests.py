@@ -6,10 +6,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from .models import PublicFile, PublicFileProject
+from .models import PublicFile, PublicFileFolder, PublicFileProject
 from .services.public_file_sync import sync_public_files
 
 
@@ -34,6 +35,59 @@ class PublicFileStorageTests(TestCase):
         )
         self.assertTrue(Path(self.media_directory.name, public_file.file.name).is_file())
 
+    def test_nested_folder_upload_uses_folder_hierarchy(self):
+        assets = PublicFileFolder.objects.create(
+            project=self.project,
+            name="Assets",
+            slug="assets",
+        )
+        icons = PublicFileFolder.objects.create(
+            project=self.project,
+            parent=assets,
+            name="Icons",
+            slug="icons",
+        )
+        public_file = PublicFile(project=self.project, folder=icons, name="Calendar")
+        public_file.file.save("calendar.png", ContentFile(b"calendar"), save=True)
+
+        self.assertEqual(
+            public_file.file.name,
+            "public_files/turno-online/assets/icons/calendar.png",
+        )
+
+    def test_folder_rejects_parent_from_another_project(self):
+        another_project = PublicFileProject.objects.create(name="Otro Proyecto")
+        parent = PublicFileFolder.objects.create(
+            project=self.project,
+            name="Assets",
+            slug="assets",
+        )
+
+        with self.assertRaises(ValidationError):
+            PublicFileFolder.objects.create(
+                project=another_project,
+                parent=parent,
+                name="Icons",
+                slug="icons",
+            )
+
+    def test_folder_rejects_cycles(self):
+        parent = PublicFileFolder.objects.create(
+            project=self.project,
+            name="Assets",
+            slug="assets",
+        )
+        child = PublicFileFolder.objects.create(
+            project=self.project,
+            parent=parent,
+            name="Icons",
+            slug="icons",
+        )
+
+        parent.parent = child
+        with self.assertRaises(ValidationError):
+            parent.save()
+
     def test_sync_creates_project_folder(self):
         result = sync_public_files()
 
@@ -57,6 +111,28 @@ class PublicFileStorageTests(TestCase):
         self.assertEqual(public_file.name, "manual.pdf")
         self.assertTrue(public_file.is_public)
         self.assertIn("public_files/turno-online/manual.pdf", result.imported_files)
+
+    def test_sync_imports_nested_folders_and_assigns_file(self):
+        file_path = Path(
+            self.media_directory.name,
+            "public_files",
+            self.project.slug,
+            "assets",
+            "icons",
+            "calendar.png",
+        )
+        file_path.parent.mkdir(parents=True)
+        file_path.write_bytes(b"calendar")
+
+        sync_public_files()
+
+        icons = PublicFileFolder.objects.get(
+            project=self.project,
+            slug="icons",
+        )
+        self.assertEqual(icons.parent.slug, "assets")
+        public_file = PublicFile.objects.get(file="public_files/turno-online/assets/icons/calendar.png")
+        self.assertEqual(public_file.folder, icons)
 
     def test_sync_is_idempotent(self):
         file_path = Path(

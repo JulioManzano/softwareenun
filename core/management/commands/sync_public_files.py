@@ -19,19 +19,24 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"{prefix}Sincronización finalizada."))
         self.stdout.write(f"Carpetas creadas o a crear: {len(result.created_directories)}")
+        self.stdout.write(f"Subcarpetas creadas o a crear: {len(result.created_folders)}")
+        self.stdout.write(f"Carpetas ya existentes: {len(result.existing_folders)}")
         self.stdout.write(f"Archivos importados o a importar: {len(result.imported_files)}")
         self.stdout.write(f"Archivos ya existentes: {len(result.existing_files)}")
         self.stdout.write(f"Registros cuyo archivo falta: {len(result.missing_records)}")
         self.stdout.write(f"Proyectos desconocidos: {len(result.unknown_projects)}")
         self.stdout.write(f"Archivos no asignados: {len(result.unassigned_files)}")
+        self.stdout.write(f"Conflictos de carpetas: {len(result.folder_conflicts)}")
         self.stdout.write(f"Errores: {len(result.errors)}")
 
         for label, values in (
             ("Carpeta", result.created_directories),
+            ("Subcarpeta", result.created_folders),
             ("Importar", result.imported_files),
             ("Falta", result.missing_records),
             ("Proyecto desconocido", result.unknown_projects),
             ("No asignado", result.unassigned_files),
+            ("Conflicto de carpeta", result.folder_conflicts),
             ("Error", result.errors),
         ):
             for value in values:

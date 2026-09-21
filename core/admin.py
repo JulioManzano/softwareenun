@@ -4,12 +4,12 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.shortcuts import render
 from django.urls import path
-from .models import PublicFile, PublicFileProject
+from .models import PublicFile, PublicFileFolder, PublicFileProject
 import config.logger_setup 
 from django.utils.html import format_html
-import os
 from django.conf import settings
 from django import forms
+from pathlib import Path
 
 from .services.public_file_sync import sync_public_files
 
@@ -43,7 +43,11 @@ class PublicFileAdminForm(forms.ModelForm):
 
         self.fields["file"].required = False
 
-        upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
+        media_root = Path(settings.MEDIA_ROOT)
+        project_id = self.data.get("project") or self.instance.project_id
+        self.fields["folder"].queryset = PublicFileFolder.objects.filter(
+            project_id=project_id
+        ) if project_id else PublicFileFolder.objects.none()
 
         # Archivos que ya están asignados a un PublicFile
         used_files = set(
@@ -54,26 +58,18 @@ class PublicFileAdminForm(forms.ModelForm):
 
         choices = [("", "---------")]
 
-        if os.path.exists(upload_dir):
-            for root, dirs, files in os.walk(upload_dir):
-                for filename in files:
-                    full_path = os.path.join(root, filename)
+        if media_root.exists():
+            for full_path in sorted(media_root.rglob("*")):
+                if not full_path.is_file():
+                    continue
 
-                    relative_path = os.path.relpath(
-                        full_path,
-                        settings.MEDIA_ROOT,
-                    ).replace(os.sep, "/")
+                relative_path = full_path.relative_to(media_root).as_posix()
 
-                    # No mostrar archivos que ya están asignados
-                    if relative_path in used_files:
-                        continue
+                # No mostrar archivos que ya están asignados
+                if relative_path in used_files:
+                    continue
 
-                    choices.append(
-                        (
-                            relative_path,
-                            relative_path,
-                        )
-                    )
+                choices.append((relative_path, relative_path))
 
         self.fields["existing_file"].choices = choices
         
@@ -110,6 +106,7 @@ class PublicFileAdmin(admin.ModelAdmin):
 
     fields = (
         "project",
+        "folder",
         "file",
         "existing_file",
         "preview",
@@ -148,6 +145,7 @@ class PublicFileInline(admin.TabularInline):
 
     fields = (
         "thumbnail",
+        "folder",
         "file",
         "name",
         "is_public",
@@ -239,3 +237,24 @@ class PublicFileProjectAdmin(admin.ModelAdmin):
     @admin.display(description="Archivos")
     def file_count(self, obj):
         return obj.files.count()
+
+
+@admin.register(PublicFileFolder)
+class PublicFileFolderAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "slug",
+        "project",
+        "parent",
+        "created_at",
+    )
+    list_filter = ("project", "created_at")
+    search_fields = ("name", "slug", "project__name")
+    readonly_fields = ("created_at",)
+    fields = (
+        "project",
+        "parent",
+        "name",
+        "slug",
+        "created_at",
+    )

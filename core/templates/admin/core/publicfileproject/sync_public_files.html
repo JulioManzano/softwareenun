@@ -13,11 +13,14 @@
     <h2>Resumen{% if result.dry_run %} de simulación{% endif %}</h2>
     <ul>
       <li>Carpetas creadas o a crear: {{ result.created_directories|length }}</li>
+      <li>Subcarpetas creadas o a crear: {{ result.created_folders|length }}</li>
+      <li>Carpetas ya existentes: {{ result.existing_folders|length }}</li>
       <li>Archivos importados o a importar: {{ result.imported_files|length }}</li>
       <li>Archivos ya existentes: {{ result.existing_files|length }}</li>
       <li>Registros cuyo archivo falta: {{ result.missing_records|length }}</li>
       <li>Proyectos desconocidos: {{ result.unknown_projects|length }}</li>
       <li>Archivos no asignados: {{ result.unassigned_files|length }}</li>
+      <li>Conflictos de carpetas: {{ result.folder_conflicts|length }}</li>
       <li>Errores: {{ result.errors|length }}</li>
     </ul>
     <p><a href="../">Volver a proyectos</a></p>

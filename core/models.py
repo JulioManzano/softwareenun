@@ -24,12 +24,30 @@ def upload_public_file(instance, filename):
     if project_slug != instance.project.slug:
         raise ValidationError("El slug del proyecto no es seguro para almacenamiento.")
 
+    folder_parts = []
+    folder = instance.folder if instance.folder_id else None
+    seen_folder_ids = set()
+    while folder is not None:
+        if folder.pk and folder.pk in seen_folder_ids:
+            raise ValidationError("La jerarquía de carpetas contiene un ciclo.")
+        if folder.project_id != instance.project_id:
+            raise ValidationError(
+                "La carpeta y el archivo deben pertenecer al mismo proyecto."
+            )
+        if not folder.slug or slugify(folder.slug) != folder.slug:
+            raise ValidationError("El slug de la carpeta no es seguro para almacenamiento.")
+        if folder.pk:
+            seen_folder_ids.add(folder.pk)
+        folder_parts.append(folder.slug)
+        folder = folder.parent
+
     normalized_name = str(filename).replace("\\", "/")
     safe_name = get_valid_filename(PurePosixPath(normalized_name).name)
     if not safe_name or safe_name in {".", ".."}:
         raise ValidationError("El nombre del archivo no es válido.")
 
-    return (PurePosixPath("public_files") / project_slug / safe_name).as_posix()
+    path = PurePosixPath("public_files") / project_slug
+    return (path.joinpath(*reversed(folder_parts)) / safe_name).as_posix()
 
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -97,9 +115,84 @@ class PublicFileProject(models.Model):
     def __str__(self):
         return self.name
 
+
+class PublicFileFolder(models.Model):
+    project = models.ForeignKey(
+        PublicFileProject,
+        on_delete=models.CASCADE,
+        related_name="folders",
+    )
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="children",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "parent", "slug"],
+                condition=models.Q(parent__isnull=False),
+                name="unique_folder_slug_per_parent",
+            ),
+            models.UniqueConstraint(
+                fields=["project", "slug"],
+                condition=models.Q(parent__isnull=True),
+                name="unique_root_folder_slug_per_project",
+            ),
+        ]
+
+    def clean(self):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        if not self.slug or slugify(self.slug) != self.slug:
+            raise ValidationError({"slug": "El slug de la carpeta no es válido."})
+
+        if self.parent_id:
+            if self.parent.project_id != self.project_id:
+                raise ValidationError(
+                    {"parent": "La carpeta padre debe pertenecer al mismo proyecto."}
+                )
+
+            ancestor = self.parent
+            visited = set()
+            while ancestor is not None:
+                if self.pk and ancestor.pk == self.pk:
+                    raise ValidationError(
+                        {"parent": "Una carpeta no puede ser su propia descendiente."}
+                    )
+                if ancestor.pk and ancestor.pk in visited:
+                    raise ValidationError(
+                        {"parent": "La jerarquía de carpetas contiene un ciclo."}
+                    )
+                if ancestor.pk:
+                    visited.add(ancestor.pk)
+                ancestor = ancestor.parent
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class PublicFile(models.Model):
     project = models.ForeignKey(PublicFileProject,on_delete=models.CASCADE,related_name="files", null=True,
     blank=True,)
+    folder = models.ForeignKey(
+        PublicFileFolder,
+        on_delete=models.SET_NULL,
+        related_name="files",
+        null=True,
+        blank=True,
+    )
     file = models.FileField(upload_to=upload_public_file)
     name = models.CharField(max_length=255, blank=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
@@ -108,7 +201,19 @@ class PublicFile(models.Model):
 
     is_public = models.BooleanField(default=True)
 
+    def clean(self):
+        if self.folder_id:
+            if not self.project_id:
+                raise ValidationError(
+                    {"project": "Un archivo dentro de una carpeta requiere proyecto."}
+                )
+            if self.folder.project_id != self.project_id:
+                raise ValidationError(
+                    {"folder": "La carpeta debe pertenecer al mismo proyecto."}
+                )
+
     def save(self, *args, **kwargs):
+        self.clean()
         if not self.slug:
             base_name = self.name or self.file.name
             base_slug = slugify(base_name) or uuid.uuid4().hex

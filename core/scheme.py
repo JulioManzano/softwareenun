@@ -1,11 +1,12 @@
 import graphene
 from graphene_django_extras import DjangoListObjectField
 from .downloader.mutation import GetDownloadInfo,GetDownloadUrl
-from core.models import PublicFile, PublicFileProject
+from core.models import PublicFile, PublicFileFolder, PublicFileProject
 from graphene_file_upload.scalars import Upload
 from core.services.replicate_service import ReplicateService
 
 from .types import (
+    PublicFileFolderType,
     PublicFileListType,
     PublicFileProjectListType,
     PublicFileType,
@@ -23,9 +24,10 @@ class Query(graphene.ObjectType):
     public_files = graphene.List(
         PublicFileType,
         project_id=graphene.Decimal(),
+        folder_id=graphene.ID(),
     )
 
-    def resolve_public_files(self, info, project_id=None):
+    def resolve_public_files(self, info, project_id=None, folder_id=None):
 
         queryset = PublicFile.objects.all()
 
@@ -33,6 +35,8 @@ class Query(graphene.ObjectType):
             queryset = queryset.filter(
                 project_id=project_id
             )
+        if folder_id:
+            queryset = queryset.filter(folder_id=folder_id)
 
         return queryset
 
@@ -106,6 +110,7 @@ class UploadPublicFileMutation(graphene.Mutation):
         project_id = graphene.ID(required=True)
         file = Upload(required=True)
         name = graphene.String()
+        folder_id = graphene.ID()
 
     success = graphene.Boolean()
     file = graphene.Field(PublicFileType)
@@ -138,9 +143,22 @@ class UploadPublicFileMutation(graphene.Mutation):
                 )
 
             file_name = name or file.name
+            folder = None
+            if folder_id:
+                try:
+                    folder = PublicFileFolder.objects.get(
+                        id=folder_id,
+                        project=project,
+                    )
+                except PublicFileFolder.DoesNotExist:
+                    return cls(
+                        success=False,
+                        error="La carpeta no existe o no pertenece al proyecto.",
+                    )
 
             public_file = PublicFile.objects.create(
                 project=project,
+                folder=folder,
                 file=file,
                 name=file_name,
                 is_public=True,

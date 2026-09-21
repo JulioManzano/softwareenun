@@ -9,6 +9,8 @@ class PublicFileSerializer(serializers.ModelSerializer):
         model = PublicFile
         fields = [
             "id",
+            "project",
+            "folder",
             "name",
             "file",
             "url",
@@ -20,6 +22,21 @@ class PublicFileSerializer(serializers.ModelSerializer):
             "url",
             "created_at",
         ]
+
+    def validate(self, attrs):
+        project = attrs.get("project") or getattr(self.instance, "project", None)
+        folder = attrs.get("folder") or getattr(self.instance, "folder", None)
+
+        if folder and (not project or folder.project_id != project.id):
+            raise serializers.ValidationError(
+                "La carpeta debe pertenecer al mismo proyecto."
+            )
+        if attrs.get("file") and not project:
+            raise serializers.ValidationError(
+                "Un archivo nuevo requiere un proyecto."
+            )
+
+        return attrs
 
     def get_url(self, obj):
         request = self.context.get("request")

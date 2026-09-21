@@ -5,12 +5,13 @@ from graphene_django import DjangoObjectType
 from graphene_django_extras import DjangoListObjectType
 from graphene_django_extras.paginations import LimitOffsetGraphqlPagination
 
-from .models import PublicFile, PublicFileProject
+from .models import PublicFile, PublicFileFolder, PublicFileProject
 
 
 class PublicFileType(DjangoObjectType):
 
     file = graphene.String()
+    folder = graphene.Field(lambda: PublicFileFolderType)
 
     class Meta:
         model = PublicFile
@@ -39,6 +40,7 @@ class PublicFileListType(DjangoListObjectType):
 class PublicFileProjectType(DjangoObjectType):
 
     files = graphene.List(PublicFileType)
+    folders = graphene.List(lambda: PublicFileFolderType)
 
     class Meta:
         model = PublicFileProject
@@ -48,6 +50,25 @@ class PublicFileProjectType(DjangoObjectType):
         return self.files.filter(
             is_public=True
         )
+
+    def resolve_folders(self, info):
+        return self.folders.filter(parent__isnull=True)
+
+
+class PublicFileFolderType(DjangoObjectType):
+
+    children = graphene.List(lambda: PublicFileFolderType)
+    files = graphene.List(lambda: PublicFileType)
+
+    class Meta:
+        model = PublicFileFolder
+        fields = "__all__"
+
+    def resolve_children(self, info):
+        return self.children.all()
+
+    def resolve_files(self, info):
+        return self.files.filter(is_public=True)
 
 
 class PublicFileProjectListType(DjangoListObjectType):
