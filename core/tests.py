@@ -182,6 +182,29 @@ class PublicFileStorageTests(TestCase):
         result = sync_public_files()
 
         self.assertIn(f"{public_file.pk}: public_files/turno-online/missing.pdf", result.missing_records)
+        public_file.refresh_from_db()
+        self.assertFalse(public_file.is_public)
+        self.assertIn(
+            f"{public_file.pk}: public_files/turno-online/missing.pdf",
+            result.deactivated_records,
+        )
+
+    def test_sync_dry_run_does_not_deactivate_missing_file(self):
+        public_file = PublicFile.objects.create(
+            project=self.project,
+            file="public_files/turno-online/missing.pdf",
+            name="missing.pdf",
+            slug="missing",
+        )
+
+        result = sync_public_files(dry_run=True)
+
+        public_file.refresh_from_db()
+        self.assertTrue(public_file.is_public)
+        self.assertIn(
+            f"{public_file.pk}: public_files/turno-online/missing.pdf",
+            result.deactivated_records,
+        )
 
     def test_sync_reports_unknown_folder_and_unassigned_file(self):
         unknown_file = Path(

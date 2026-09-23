@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Sincronizar archivos públicos</h1>
   {% if not result %}
-    <p>La sincronización solo crea carpetas y registros faltantes. No elimina ni mueve archivos ni registros.</p>
+    <p>La sincronización crea carpetas y registros faltantes. No elimina ni mueve archivos ni registros; los registros cuyo archivo falta se mantienen, pero dejan de ser públicos.</p>
     <form method="post">
       {% csrf_token %}
       <button type="submit" name="mode" value="dry-run" class="button">Simular</button>
@@ -30,11 +30,20 @@
       <li>Archivos importados o a importar: {{ result.imported_files|length }}</li>
       <li>Archivos ya existentes: {{ result.existing_files|length }}</li>
       <li>Registros cuyo archivo falta: {{ result.missing_records|length }}</li>
+      <li>Registros ocultados por archivo faltante: {{ result.deactivated_records|length }}</li>
       <li>Proyectos desconocidos: {{ result.unknown_projects|length }}</li>
       <li>Archivos no asignados: {{ result.unassigned_files|length }}</li>
       <li>Conflictos de carpetas: {{ result.folder_conflicts|length }}</li>
       <li>Errores: {{ result.errors|length }}</li>
     </ul>
+    {% if result.deactivated_records %}
+      <h3>Registros ocultados por archivo faltante</h3>
+      <ul>
+        {% for record in result.deactivated_records %}
+          <li><code>{{ record }}</code></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     {% if result.unknown_projects %}
       <h3>Carpetas de proyecto desconocidas</h3>
       <ul>

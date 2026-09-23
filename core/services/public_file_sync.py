@@ -24,6 +24,7 @@ class PublicFileSyncResult:
     imported_files: list[str] = field(default_factory=list)
     existing_files: list[str] = field(default_factory=list)
     missing_records: list[str] = field(default_factory=list)
+    deactivated_records: list[str] = field(default_factory=list)
     unknown_projects: list[str] = field(default_factory=list)
     unassigned_files: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
@@ -272,16 +273,23 @@ def _find_missing_records(result: PublicFileSyncResult) -> None:
         relative_name = str(public_file.file.name).replace("\\", "/")
         physical_path = media_root / relative_name
         if not _is_inside(physical_path, media_root) or not physical_path.is_file():
-            result.missing_records.append(
-                f"{public_file.pk}: {relative_name or '[sin archivo]'}"
-            )
+            display_name = f"{public_file.pk}: {relative_name or '[sin archivo]'}"
+            result.missing_records.append(display_name)
+
+            if public_file.is_public:
+                result.deactivated_records.append(display_name)
+                if not result.dry_run:
+                    public_file.is_public = False
+                    public_file.save(update_fields=["is_public"])
 
 
 def sync_public_files(*, dry_run: bool = False) -> PublicFileSyncResult:
     """Synchronize project directories and physical public files.
 
-    The service only creates directories and missing database records. It never
-    deletes or moves files or database rows.
+    The service creates directories and missing database records. It never
+    deletes or moves files or database rows. Records whose physical file is
+    missing are kept but made non-public so API consumers cannot use a stale
+    URL.
     """
     result = PublicFileSyncResult(dry_run=dry_run)
     media_root = _media_root()

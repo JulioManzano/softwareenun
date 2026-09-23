@@ -41,7 +41,7 @@ class Query(graphene.ObjectType):
 
     def resolve_public_files(self, info, project_id=None, folder_id=None):
 
-        queryset = PublicFile.objects.all()
+        queryset = PublicFile.objects.filter(is_public=True)
 
         if project_id:
             queryset = queryset.filter(

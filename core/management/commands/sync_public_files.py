@@ -4,7 +4,10 @@ from core.services.public_file_sync import sync_public_files
 
 
 class Command(BaseCommand):
-    help = "Sincroniza carpetas y registros de PublicFile sin eliminar datos."
+    help = (
+        "Sincroniza archivos públicos sin eliminar datos; oculta registros "
+        "cuyo archivo físico ya no existe."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -27,6 +30,9 @@ class Command(BaseCommand):
         self.stdout.write(f"Archivos importados o a importar: {len(result.imported_files)}")
         self.stdout.write(f"Archivos ya existentes: {len(result.existing_files)}")
         self.stdout.write(f"Registros cuyo archivo falta: {len(result.missing_records)}")
+        self.stdout.write(
+            f"Registros ocultados por archivo faltante: {len(result.deactivated_records)}"
+        )
         self.stdout.write(f"Proyectos desconocidos: {len(result.unknown_projects)}")
         self.stdout.write(f"Archivos no asignados: {len(result.unassigned_files)}")
         self.stdout.write(f"Conflictos de carpetas: {len(result.folder_conflicts)}")
@@ -38,6 +44,7 @@ class Command(BaseCommand):
             ("Subcarpeta", result.created_folders),
             ("Importar", result.imported_files),
             ("Falta", result.missing_records),
+            ("Ocultado", result.deactivated_records),
             ("Proyecto desconocido", result.unknown_projects),
             ("No asignado", result.unassigned_files),
             ("Conflicto de carpeta", result.folder_conflicts),

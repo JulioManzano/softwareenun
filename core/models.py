@@ -56,7 +56,6 @@ class Role(models.Model):
         return self.name
     
 class User(AbstractUser):
-
     email = models.EmailField(unique=True)
     roles = models.ManyToManyField(Role)
     email_verified = models.BooleanField(default=False)
