@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import include, path
 from django.conf import settings
@@ -51,6 +52,13 @@ class DebugView(FileUploadGraphQLView):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path(
+        "multitools/privacy-policy/",
+        TemplateView.as_view(
+            template_name="core/legal/multitools_privacy_policy.html"
+        ),
+        name="multitools-privacy-policy",
+    ),
     path("api/", include("core.urls")),
     path(
         "graphql/",
