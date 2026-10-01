@@ -9,7 +9,7 @@ from .services.iptv_importer import import_m3u
 class ChannelAdmin(admin.ModelAdmin):
     change_list_template = "admin/channel_changelist.html"
 
-    list_display = ("id","name", "country", "category",)
+    list_display = ("id","name", "country",)
     list_filter = ("country", "category", )
     search_fields = ("name",)
 
