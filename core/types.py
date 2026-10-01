@@ -5,7 +5,13 @@ from graphene_django import DjangoObjectType
 from graphene_django_extras import DjangoListObjectType
 from graphene_django_extras.paginations import LimitOffsetGraphqlPagination
 
-from .models import PublicFile, PublicFileFolder, PublicFileProject
+from .models import PublicFile, PublicFileFolder, PublicFileProject, User
+
+
+class AccountType(DjangoObjectType):
+    class Meta:
+        model = User
+        fields = ("id", "firebase_uid", "email", "email_verified")
 
 
 class PublicFileType(DjangoObjectType):

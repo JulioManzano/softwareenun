@@ -56,7 +56,8 @@ class Role(models.Model):
         return self.name
     
 class User(AbstractUser):
-    email = models.EmailField(unique=True)
+    email = models.EmailField(blank=True, null=True)
+    firebase_uid = models.CharField(max_length=128, unique=True, null=True, blank=True)
     roles = models.ManyToManyField(Role)
     email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)

@@ -1,4 +1,6 @@
 import graphene
+from .services.firebase_auth import firebase_required
+from .types import AccountType
 from graphene_django_extras import DjangoListObjectField
 from .downloader.mutation import GetDownloadInfo,GetDownloadUrl
 from core.models import PublicFile, PublicFileFolder, PublicFileProject
@@ -20,6 +22,12 @@ from .filters import (
 
 
 class Query(graphene.ObjectType):
+
+    me = graphene.Field(AccountType)
+
+    @firebase_required
+    def resolve_me(self, info):
+        return info.context.user
 
     public_file_folders = graphene.List(
         PublicFileFolderType,

@@ -32,6 +32,7 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 AUTH_USER_MODEL = 'core.User'
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "")
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

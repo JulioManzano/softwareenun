@@ -29,6 +29,8 @@ from core.scheme import Query as CoreQuery
 from core.scheme import Mutation as CoreMutation
 from graphene_django_extras import all_directives
 from graphene_file_upload.django import FileUploadGraphQLView
+from django.http import JsonResponse
+from core.services.firebase_auth import authenticate_request, FirebaseAuthenticationError
 
 class Query(ChannelQuery, CoreQuery,graphene.ObjectType):
     pass
@@ -46,7 +48,11 @@ schema = graphene.Schema(
 )
 
 class DebugView(FileUploadGraphQLView):
-    def dispatch(self, request, *args, **kwargs):       
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            authenticate_request(request)
+        except FirebaseAuthenticationError as exc:
+            return JsonResponse({"errors": [{"message": str(exc), "extensions": {"code": "UNAUTHENTICATED"}}]}, status=401)
         return super().dispatch(request, *args, **kwargs)
     
 
