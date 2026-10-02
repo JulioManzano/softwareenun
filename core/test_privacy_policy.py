@@ -8,6 +8,7 @@ class MultiToolsPrivacyPolicyTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Política de privacidad")
-        self.assertContains(response, "Mejorar imagen")
+        self.assertContains(response, "Word a PDF")
         self.assertContains(response, "archivos públicos")
-        self.assertContains(response, "Replicate")
+        self.assertContains(response, "temporales")
+        self.assertContains(response, "se eliminan")
