@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from typing import Any
-from urllib.parse import urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from .base import BaseStreamExtractor, DrmDetectedError, ExtractionError, StreamResult
 
@@ -86,12 +86,19 @@ class ElnueveStreamExtractor(BaseStreamExtractor):
                 response.raise_for_status()
                 page_html = response.text
                 iframe_url = self._find_provider_iframe(page_html) or ""
+                youtube_video_id = self._youtube_video_id(iframe_url)
+                if youtube_video_id:
+                    return self._youtube_result(
+                        youtube_video_id,
+                        discovered_from="official page iframe",
+                    )
+
                 direct_hls = self._find_hls(page_html)
                 logger.info(
-                    "El Nueve landing loaded status=%s bytes=%s iframe=%s hls_in_html=%s",
+                    "El Nueve landing loaded status=%s bytes=%s iframe_host=%s hls_in_html=%s",
                     response.status_code,
                     len(page_html),
-                    iframe_url or "none",
+                    urlparse(iframe_url).hostname or "none",
                     bool(direct_hls),
                 )
 
@@ -215,7 +222,10 @@ class ElnueveStreamExtractor(BaseStreamExtractor):
             if self._is_hls(request.url):
                 item = {"url": request.url, "headers": headers_for(request)}
                 hls_requests.append(item)
-                logger.info("El Nueve Playwright HLS request url=%s", request.url)
+                logger.info(
+                    "El Nueve Playwright HLS request host=%s",
+                    urlparse(request.url).hostname or "unknown",
+                )
 
         def on_response(response: Any) -> None:
             url = response.url
@@ -233,7 +243,10 @@ class ElnueveStreamExtractor(BaseStreamExtractor):
                     "response_url": url,
                 }
                 json_hls.append(item)
-                logger.info("El Nueve HLS found in JSON response url=%s", url)
+                logger.info(
+                    "El Nueve HLS found in JSON response host=%s",
+                    urlparse(url).hostname or "unknown",
+                )
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
@@ -249,6 +262,15 @@ class ElnueveStreamExtractor(BaseStreamExtractor):
                 )
                 page.wait_for_timeout(15_000)
                 body_text = page.locator("body").inner_text(timeout=5_000)
+                iframe_urls = [known_iframe, *(frame.url for frame in page.frames)]
+                for iframe_url in iframe_urls:
+                    youtube_video_id = self._youtube_video_id(iframe_url)
+                    if youtube_video_id:
+                        return self._youtube_result(
+                            youtube_video_id,
+                            discovered_from="Playwright iframe inspection",
+                        )
+
                 if self._looks_like_drm(observed_urls, body_text):
                     raise DrmDetectedError(
                         "El reproductor de El Nueve parece usar DRM/license negotiation; "
@@ -283,6 +305,49 @@ class ElnueveStreamExtractor(BaseStreamExtractor):
             finally:
                 context.close()
                 browser.close()
+
+    @staticmethod
+    def _youtube_video_id(url: str) -> str | None:
+        if not url:
+            return None
+        if url.startswith("//"):
+            url = f"https:{url}"
+
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        path_parts = [part for part in parsed.path.split("/") if part]
+        video_id = None
+
+        if host == "youtu.be":
+            video_id = path_parts[0] if path_parts else None
+        elif host.endswith(("youtube.com", "youtube-nocookie.com")):
+            if (
+                path_parts
+                and path_parts[0] == "embed"
+                and len(path_parts) > 1
+                and path_parts[1] == "live_stream"
+            ):
+                return None
+            if path_parts and path_parts[0] in {"embed", "live", "shorts"}:
+                video_id = path_parts[1] if len(path_parts) > 1 else None
+            elif parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [None])[0]
+
+        if video_id and re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+            return video_id
+        return None
+
+    @staticmethod
+    def _youtube_result(video_id: str, *, discovered_from: str) -> StreamResult:
+        return StreamResult(
+            url=f"https://www.youtube.com/watch?v={video_id}",
+            use_hls=False,
+            link_direct=False,
+            source="El Nueve / YouTube",
+            discovered_from=discovered_from,
+            playback_type="youtube",
+            diagnostics={"video_id": video_id, "token_persisted": False},
+        )
 
     def _result_from_hls(
         self,

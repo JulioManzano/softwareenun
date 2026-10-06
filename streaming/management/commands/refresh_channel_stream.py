@@ -68,7 +68,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"{provider} {action}: hls={result.use_hls} direct={result.link_direct} "
-                f"source={result.source}"
+                f"type={result.playback_type} source={result.source}"
             )
         )
         self.stdout.write(

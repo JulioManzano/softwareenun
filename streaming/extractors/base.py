@@ -24,6 +24,7 @@ class StreamResult:
     discovered_from: str = ""
     expires_at: datetime | None = None
     diagnostics: dict[str, Any] = field(default_factory=dict)
+    playback_type: str = "native"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -35,6 +36,7 @@ class StreamResult:
             "discovered_from": self.discovered_from,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "diagnostics": dict(self.diagnostics),
+            "playback_type": self.playback_type,
         }
 
 

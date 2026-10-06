@@ -21,6 +21,12 @@ class Channel(models.Model):
     order = models.IntegerField(null=True, blank=True, verbose_name='Orden')
 
     headers = models.JSONField(default=dict, blank=True, verbose_name='Headers')
+    playback_type = models.CharField(
+        max_length=16,
+        choices=(('native', 'Native'), ('youtube', 'YouTube')),
+        default='native',
+        verbose_name='Reproductor',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Creado')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Actualizado')

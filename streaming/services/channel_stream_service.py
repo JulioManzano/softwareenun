@@ -21,6 +21,7 @@ class ChannelStreamService:
         channel.link_direct = result.link_direct
         channel.headers = result.headers
         channel.source = result.source
+        channel.playback_type = result.playback_type
         if save:
             channel.save(
                 update_fields=[
@@ -29,6 +30,7 @@ class ChannelStreamService:
                     "link_direct",
                     "headers",
                     "source",
+                    "playback_type",
                     "updated_at",
                 ]
             )
