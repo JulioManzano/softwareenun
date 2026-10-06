@@ -14,6 +14,9 @@ python manage.py createsuperuser
 
 pip freeze > requirements.txt
 
+Sin `DATABASE_URL`, el entorno local usa `db.local.sqlite3`. La base antigua
+`db.sqlite3` se conserva y no se modifica automáticamente.
+
 from script.auto_assign_delivery import run, clear
 clear()
 run()
